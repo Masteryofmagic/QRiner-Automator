@@ -4,10 +4,13 @@ import os
 import string
 import sys
 
+
+import myglobals
+
 class SystemCheck:
     def __init__(self):
         self.options_file = "options.json"
-        self.options = {}
+        self.options = myglobals.options
 
     def check_options(self):
         if os.path.exists(self.options_file):
@@ -82,14 +85,20 @@ class OptionBuild:
                             print(f"Index: {index}, Char: '{char}'")
 
                 elif is_boolean:
-                    if response.lower() in ['y', 'yes']:
+                    if response.lower() in ['y', 'yes', 'true']:
                         response = True
                         valid_response = True
-                    elif response.lower() in ['n', 'no']:
+                    elif response.lower() in ['n', 'no', 'false']:
                         response = False
                         valid_response = True
                     else:
                         print("Invalid response. Please answer with 'Y' for Yes or 'N' for No.")
+                elif key == "ThreadCount":
+                    try:
+                        response = int(response)
+                        valid_response = True
+                    except ValueError:
+                        print("Invalid response. Please enter a valid integer for ThreadCount.")
                 else:
                     valid_response = True
 
@@ -104,3 +113,5 @@ class OptionBuild:
 
 # Setup logging to see debug outputs
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+

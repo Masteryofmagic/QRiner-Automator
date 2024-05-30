@@ -1,0 +1,14 @@
+{
+    "CPUMining": true,
+    "CPUAlias": "CPUTesting",
+    "GPUMining": false,
+    "GPUAlias": "GPU",
+    "Autostart": true,
+    "AutoUpdate": true,
+    "AutoBench": true,
+    "AutoRestart": true,
+    "FilePath": "C:\\Users\\maste\\OneDrive\\Desktop\\Rqiner",
+    "PayID": "WIWFCCRPMKNDODNXRVJZIRQNQHKCIGLSYDEMRLIZFBYCLJBQQKQDIUSBWTXL",
+    "ThreadCount": 28,
+    "HideWindows": false
+}

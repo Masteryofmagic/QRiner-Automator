@@ -1,57 +1,65 @@
 import logging
 import os
+import platform
 import subprocess
 
+#from MonitorProc import ProcessMonitor
+import myglobals
 class StartProcess:
-    def __init__(self, options):
-        self.options = options
+    def __init__(self):
+        self.options = myglobals.options
+
 
     def start(self, process_type):
         logging.info(f"Attempting to start {process_type} process...")
         if self.options.get("Autostart", False):  # Assuming Autostart should be a boolean
             command = self.build_command(process_type)
             if command:  # Ensure command was built successfully
-                proc = self.run_process(command, process_type)
-                return proc
+                if process_type == "CPUMining":
+                    myglobals.process_info['CPUCommand'] = command
+                elif process_type == "GPUMining":
+                    myglobals.process_info['GPUCommand'] = command
+                return self.run_process(command, process_type)
             else:
                 logging.error(f"Failed to build command for {process_type}")
         else:
             logging.info("Autostart is disabled.")
+        return None
 
     def build_command(self, process_type):
-        if process_type == "CPU":
+        if process_type == "CPUMining":
             return self.build_cpu_command()
-        elif process_type == "GPU":
+        elif process_type == "GPUMining":
             return self.build_gpu_command()
 
     def build_cpu_command(self):
         best_exe, highest_value = self.get_best_performing_exe()
         if not best_exe:  # Benchmark file not found or no executable determined
-            if self.options.get("AutoBenchmark", False):
+            if myglobals.options.get("AutoBenchmark", False):
                 from Benchmark import Benchmark  # Assume Benchmark is a module you can import
                 benchmark = Benchmark(self.options.get("FilePath", os.getcwd()), self.options.get("ThreadCount", os.cpu_count()))
                 benchmark.perform_benchmark()
                 best_exe, highest_value = self.get_best_performing_exe()
 
         if best_exe:
-            thread_count = self.options.get("ThreadCount", 1)
-            pay_id = self.options.get("PayID", "")
-            cpu_alias = self.options.get("CPUAlias", "CPU")
-            return [os.path.join(self.options.get("FilePath", os.getcwd()), best_exe),
+            thread_count = myglobals.options.get("ThreadCount", 1)
+            pay_id = myglobals.options.get("PayID", "")
+            cpu_alias = myglobals.options.get("CPUAlias", "CPU")
+            return [os.path.join(myglobals.options.get("FilePath", os.getcwd()), best_exe),
                     "--threads", str(thread_count), "--id", pay_id, "--label", cpu_alias]
         return None
 
     def build_gpu_command(self):
-        file_path = self.options.get("FilePath", os.getcwd())
+        file_path = myglobals.options.get("FilePath", os.getcwd())
         exe_files = [f for f in os.listdir(file_path) if 'cuda' in f and f.endswith('.exe')]
         gpu_exe = exe_files[0] if exe_files else None
-        pay_id = self.options.get("PayID", "")
-        gpu_alias = self.options.get("GPUAlias", "GPU")
+        pay_id = myglobals.options.get("PayID", "")
+        gpu_alias = myglobals.options.get("GPUAlias", "GPU")
 
         return [os.path.join(file_path, gpu_exe), "--id", pay_id, "--label", gpu_alias]
 
     def get_best_performing_exe(self):
-        file_path = os.path.join(self.options.get("FilePath", os.getcwd()), 'benchmarks.txt')
+        file_path = os.path.join(myglobals.options.get("FilePath", os.getcwd()), 'benchmarks.txt')
         highest_value = 0
         best_exe = None
         try:
@@ -67,13 +75,41 @@ class StartProcess:
         return best_exe, highest_value
 
     def run_process(self, command, process_type):
-        # Directly use the boolean value for HideWindows
-        hide_windows = self.options.get("HideWindows", False)
-        if os.name == 'nt' and hide_windows:
-            # Windows specific: hide the command window
-            proc = subprocess.Popen(command, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        hide_windows = myglobals.options.get("HideWindows", False)
+
+        if platform.system() == 'Windows':
+            if hide_windows:
+                # Windows specific: run without showing the window
+                proc = subprocess.Popen(command, creationflags=subprocess.CREATE_NO_WINDOW)
+            else:
+                # Windows specific: open a new command window
+                proc = subprocess.Popen(['start', 'cmd', '/k'] + command, shell=True)
         else:
-            proc = subprocess.Popen(command, shell=True)
+            if hide_windows:
+                # Linux specific: run without showing the window
+                proc = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                # Linux specific: open a new terminal window
+                proc = subprocess.Popen(['xterm', '-e'] + command)
 
         logging.info(f"{process_type} process started with command: {' '.join(command)}")
         return proc
+
+def start_processes(process_starter):
+    if myglobals.options.get("CPUMining", False):
+        cpu_process = process_starter.start("CPUMining")
+        if cpu_process:
+            myglobals.process_info['CPUProcess'] = cpu_process
+
+            #cpu_monitor = ProcessMonitor(cpu_process, options, restart_processes, process_starter, process_monitors, process_threads)
+            #cpu_monitor.start_monitoring()
+            #process_monitors.append(cpu_monitor)
+
+    if myglobals.options.get("GPUMining", False):
+        gpu_process = process_starter.start("GPUMining")
+        if gpu_process:
+            #from Restart import restart_processes  # Lazy import
+            myglobals.process_info['GPUProcess'] = gpu_process
+            #gpu_monitor = ProcessMonitor(gpu_process, options, restart_processes, process_starter, process_monitors, process_threads)
+            #gpu_monitor.start_monitoring()
+            #process_monitors.append(gpu_monitor)

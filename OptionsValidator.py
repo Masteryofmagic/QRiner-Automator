@@ -1,6 +1,7 @@
-import os
 import json
 import logging
+import os
+
 
 class OptionsValidator:
     VALID_KEYS = {
@@ -73,10 +74,6 @@ def load_and_validate_options(filename="options.json"):
             return options
     except (FileNotFoundError, ValueError) as e:
         logging.error(str(e))
-        return collect_options()  # Fall back to collecting options
+        #return collect_options()  # Fall back to collecting options
 
-def collect_options():
-    options = {}
-    print("Collecting options from user...")
-    # Implement option collection logic...
-    return options
+

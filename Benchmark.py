@@ -1,11 +1,11 @@
 import os
 import subprocess
 import logging
-
+import myglobals
 class Benchmark:
-    def __init__(self, file_path, thread_count):
-        self.file_path = file_path
-        self.thread_count = thread_count
+    def __init__(self):
+        self.file_path = myglobals.options.get('FilePath')
+        self.thread_count = myglobals.options.get('ThreadCount')
         self.bench_array = []
 
     def run_command_with_timeout(self, command, timeout_sec=15):  # Fixed timeout of 15 seconds

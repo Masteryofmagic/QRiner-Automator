@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/Version 1" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.12 (Qubic-Solutions Auto)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
