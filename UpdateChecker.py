@@ -1,10 +1,12 @@
 import logging
 import myglobals
-from Restart import Restart
+
 from UpdateFiles import UpdateFiles
 
 class UpdateChecker:
 
+    def __init__(self,restarter):
+        self.restarter = restarter
     def check_updates_periodically(self):
         while not myglobals.update_event.is_set():
             if myglobals.options.get("AutoUpdate", False):
@@ -16,8 +18,8 @@ class UpdateChecker:
 
                 if myglobals.updates_available:
                     logging.info("Updates available. Restarting processes...")
-                    restarter = Restart()
-                    restarter.terminate_all_processes()
+
+                    self.restarter.terminate_all_processes()
 
                     if myglobals.cpu_updates_available:
                         logging.info("CPU updates available. Downloading updates...")
@@ -33,6 +35,6 @@ class UpdateChecker:
 
                     # Restart processes after updates
                     logging.info("Restarting processes after updates...")
-                    restarter.restart_processes()
+                    self.restarter.restart_processes()
 
             myglobals.update_event.wait(60)  # Check for updates every minute

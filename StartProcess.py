@@ -13,15 +13,16 @@ class StartProcess:
     def start(self, process_type):
         logging.info(f"Attempting to start {process_type} process...")
         if self.options.get("Autostart", False):  # Assuming Autostart should be a boolean
-            command = self.build_command(process_type)
-            if command:  # Ensure command was built successfully
-                if process_type == "CPUMining":
-                    myglobals.process_info['CPUCommand'] = command
-                elif process_type == "GPUMining":
-                    myglobals.process_info['GPUCommand'] = command
+            if process_type == "CPUMining" and myglobals.process_info['CPUCommand'] == None:
+                command = self.build_command(process_type)
+                myglobals.process_info['CPUCommand'] = command
                 return self.run_process(command, process_type)
             else:
-                logging.error(f"Failed to build command for {process_type}")
+                command = myglobals.process_info['CPUCommand']
+                return self.run_process(command, process_type)
+
+
+
         else:
             logging.info("Autostart is disabled.")
         return None
@@ -83,7 +84,8 @@ class StartProcess:
                 proc = subprocess.Popen(command, creationflags=subprocess.CREATE_NO_WINDOW)
             else:
                 # Windows specific: open a new command window
-                proc = subprocess.Popen(['start', 'cmd', '/k'] + command, shell=True)
+                proc = subprocess.Popen(command, shell=False)
+
         else:
             if hide_windows:
                 # Linux specific: run without showing the window
@@ -113,3 +115,6 @@ def start_processes(process_starter):
             #gpu_monitor = ProcessMonitor(gpu_process, options, restart_processes, process_starter, process_monitors, process_threads)
             #gpu_monitor.start_monitoring()
             #process_monitors.append(gpu_monitor)
+
+
+

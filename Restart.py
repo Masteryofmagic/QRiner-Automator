@@ -9,6 +9,7 @@ from Benchmark import Benchmark
 from StartProcess import start_processes, StartProcess
 from UpdateChecker import UpdateChecker
 from UpdateFiles import UpdateFiles
+from MonitorProc import MonitorProc
 
 
 class Restart:
@@ -61,7 +62,7 @@ class Restart:
             except Exception as e:
                 logging.error(f"Failed to terminate process {proc.args}: {e}")
 
-        specific_process_names = [os.path.basename(proc.args[0]) for proc in process_procs if proc.args]
+        specific_process_names = [os.path.basename(proc.args[3]) for proc in process_procs if proc.args]
 
         # Terminate specific processes by name
         for process_name in specific_process_names:
@@ -88,9 +89,18 @@ class Restart:
         # Restart processes
         process_starter = StartProcess()
         start_processes(process_starter)
+        if myglobals.options.get('CPUMining'):
+            cpu_monitor = MonitorProc('CPUMonitor')
+            cpu_monitor.start()
+            myglobals.process_info['CPUMonitor'] = cpu_monitor
 
+        if myglobals.options.get('GPUMonitor'):
+            gpu_monitor = MonitorProc('GPUMonitor')
+            gpu_monitor.start()
+            myglobals.process_info['GPUMonitor'] = gpu_monitor
 
         myglobals.update_event.clear()
-        update_checker = UpdateChecker()
+        restarter = Restart()
+        update_checker = UpdateChecker(restarter)
         myglobals.update_thread = threading.Thread(target=update_checker.check_updates_periodically(), args=(), daemon=True)
         myglobals.update_thread.start()

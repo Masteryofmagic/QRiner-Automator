@@ -10,9 +10,11 @@ import myglobals
 from Benchmark import Benchmark
 from OptionsValidator import OptionsValidator
 from StartProcess import StartProcess, start_processes
-from SystemCheck import SystemCheck, UpdateChecker
+from SystemCheck import SystemCheck
 from UpdateFiles import UpdateFiles
 from Restart import Restart
+from UpdateChecker import UpdateChecker
+from MonitorProc import MonitorProc
 
 
 
@@ -87,14 +89,21 @@ class StartupProgram:
 
         #Start the update thread
         myglobals.update_event.clear()
-        update_checker = UpdateChecker()
+        restarter = Restart()
+        update_checker = UpdateChecker(restarter)
         myglobals.update_thread = threading.Thread(target=update_checker.check_updates_periodically, args=(), daemon=True)
         myglobals.update_thread.start()
 
-        # Optionally wait for all monitoring threads to finish (e.g., for a clean shutdown)
-        # for monitor in process_monitors:
-        #     if monitor.is_active():
-        #         monitor.get_thread().join()
+        if myglobals.options.get('CPUMining'):
+            cpu_monitor = MonitorProc('CPUProcess', 'CPUMonitor')
+            cpu_monitor.start()
+            #myglobals.process_info['CPUMonitor'] = cpu_monitor
+
+        if myglobals.options.get('GPUMining'):
+            gpu_monitor = MonitorProc('GPUProcess', 'GPUMonitor')
+            gpu_monitor.start()
+            #myglobals.process_info['GPUMonitor'] = gpu_monitor
+
         try:
             while True:
                 time.sleep(1)
