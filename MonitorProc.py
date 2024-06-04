@@ -39,9 +39,10 @@ class MonitorProc:
 
     def monitor(self):
         while True:
-            time.sleep(60)
+            time.sleep(15)
             if self.process.poll() is not None:  # Process has exited
                 logging.error(f"Process {self.process_key} has exited with return code {self.process.returncode}. Restarting...")
+                myglobals.process_info[f'{self.process_key}'] = None
                 self.terminate_process()
                 process_starter = StartProcess()
                 start_processes(process_starter)

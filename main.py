@@ -32,7 +32,7 @@ class StartupProgram:
 
     def startup_program(self):
         logging.basicConfig(
-            level=logging.DEBUG,  # Set the logging level to DEBUG to capture all log messages
+            level=logging.info,  # Set the logging level to DEBUG to capture all log messages
             format='%(asctime)s - %(levelname)s - %(message)s'  # Define the log message format
         )
 
@@ -44,12 +44,14 @@ class StartupProgram:
         options_file = "options.json"
 
         if not os.path.exists(options_file):
-            logging.warning("Options file not found. Stand by while options are created.")
+            logging.warning("Unable to find options.json file.  Creating new file.")
             system_checker = SystemCheck()
             system_checker.check_options()  # This will create the file if not present
 
         with open(options_file, 'r') as file:
+            logging.info("Reading options.json file.")
             myglobals.options = json.load(file)
+            logging.info("Option validation in progress")
             validation = OptionsValidator(myglobals.options)
             validation_errors = validation.validate()
             if validation_errors:
@@ -60,49 +62,56 @@ class StartupProgram:
 
         # Initialize system checks
         system_checker = SystemCheck()
+        logging.info("Verifying system integrity")
         system_checker.check_options()
 
         if myglobals.options.get("AutoUpdate", False):
 
             updater = UpdateFiles()
-
+            logging.info("Checking for latest mining software")
             myglobals.updates_available = updater.check_for_updates()
 
             if myglobals.updates_available:
 
-                logging.info("Updates available. Downloading updates...")
+                logging.info("New mining software available. Download in progress")
 
                 updated = updater.download_and_replace()
 
                 # Perform benchmarking if required
+                logging.info("Looking for benchmark file")
                 benchmark_file_path = os.path.join(myglobals.options.get('FilePath', os.getcwd()), 'benchmarks.txt')
                 should_benchmark = myglobals.options.get("AutoBench", False) and (
                         not os.path.exists(benchmark_file_path) or updated)
+
                 if should_benchmark:
-                    logging.info("Benchmarking conditions met. Proceeding with benchmark.")
+                    logging.info("Benchmarks unavailable.  Running benchmarks")
                     benchmark = Benchmark()
                     benchmark.perform_benchmark()
 
         # Initialize and start processes for the first time
         process_starter = StartProcess()
+        logging.info("Starting up the miners")
         start_processes(process_starter)
 
         #Start the update thread
         myglobals.update_event.clear()
         restarter = Restart()
+        logging.info("Beginning to check for updates regularly")
         update_checker = UpdateChecker(restarter)
         myglobals.update_thread = threading.Thread(target=update_checker.check_updates_periodically, args=(), daemon=True)
         myglobals.update_thread.start()
 
         if myglobals.options.get('CPUMining'):
             cpu_monitor = MonitorProc('CPUProcess', 'CPUMonitor')
+            logging.info("Monitoring CPU miner")
             cpu_monitor.start()
-            #myglobals.process_info['CPUMonitor'] = cpu_monitor
+
 
         if myglobals.options.get('GPUMining'):
             gpu_monitor = MonitorProc('GPUProcess', 'GPUMonitor')
+            logging.info("Monitoring GPU miner")
             gpu_monitor.start()
-            #myglobals.process_info['GPUMonitor'] = gpu_monitor
+
 
         try:
             while True:
@@ -113,6 +122,7 @@ class StartupProgram:
 
 def main():
     startup_program = StartupProgram()
+    logging.info("Initializing")
     startup_program.startup_program()
 
 

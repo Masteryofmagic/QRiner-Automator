@@ -37,4 +37,4 @@ class UpdateChecker:
                     logging.info("Restarting processes after updates...")
                     self.restarter.restart_processes()
 
-            myglobals.update_event.wait(60)  # Check for updates every minute
+            myglobals.update_event.wait(300)  # Check for updates every 5 minutes

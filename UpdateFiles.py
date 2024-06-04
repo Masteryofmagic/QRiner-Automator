@@ -16,26 +16,28 @@ class UpdateFiles:
         os.makedirs(self.download_path, exist_ok=True)  # Ensure the download path exists
 
     def check_for_updates(self):
-        logging.info("Checking for updates...")
+
         myglobals.updates_available = False
         myglobals.cpu_updates_available = False
         myglobals.gpu_updates_available = False
         for repo_key, repo_info in self.repos.items():
 
             if self.options.get(repo_key, False):  # Check if updates are enabled for this key
-                logging.info(f"Checking for updates for {repo_key}...")
+                logging.info(f"Checking for updates")
                 if self.are_updates_available(repo_info):
 
                     if repo_key == 'CPUMining':
                         myglobals.cpu_updates_available = True
+                        logging.info(f"Updates available for CPU miner")
                     if repo_key == 'GPUMining':
                         myglobals.gpu_updates_available = True
-        logging.info(f"Updates available: {myglobals.updates_available}")
+                        logging.info(f"Updates available for GPU miner")
+
         if myglobals.cpu_updates_available or myglobals.gpu_updates_available:
             return True
     def are_updates_available(self, repo_info):
         assets = self.get_latest_release_info(repo_info['owner'], repo_info['repo'])
-        logging.info(f"Assets found: {assets}")
+        logging.debug(f"Assets found: {assets}")
         for name, url, upload_date in assets:
             local_file_path = os.path.join(self.download_path, name)
             if not os.path.exists(local_file_path) or self.is_local_file_older(local_file_path, upload_date):
@@ -48,13 +50,13 @@ class UpdateFiles:
         gpu_updated = False
         for repo_key, repo_info in self.repos.items():
             if self.options.get(repo_key, False):
-                logging.info(f"Updating for {repo_key}")
+                logging.debug(f"Downloading {repo_key}")
                 assets = self.get_latest_release_info(repo_info['owner'], repo_info['repo'])
                 for name, url, upload_date in assets:
                     local_file_path = os.path.join(self.download_path, name)
                     if not os.path.exists(local_file_path) or self.is_local_file_older(local_file_path, upload_date):
                         if self.download_file(url, local_file_path):
-                            logging.info(f"Downloaded {name} to {local_file_path}")
+                            logging.debug(f"Downloaded {name} to {local_file_path}")
                             if 'cuda' in name:
                                 gpu_updated = True
                             else:
@@ -67,7 +69,7 @@ class UpdateFiles:
         response = requests.get(api_url, headers=headers)
         if response.status_code == 200:
             release_info = response.json()
-            logging.info(f"Release info: {release_info}")
+            logging.debug(f"Release info: {release_info}")
             return [(asset['name'], asset['browser_download_url'], asset['updated_at'])
                     for asset in release_info['assets'] if 'exe' in asset['name']]
         else:
@@ -92,7 +94,7 @@ class UpdateFiles:
                 return True  # File is "older" if it doesn't exist
             local_mod_date = datetime.fromtimestamp(os.path.getmtime(local_file_path))
             github_upload_date = datetime.strptime(github_upload_date_str, "%Y-%m-%dT%H:%M:%SZ")
-            logging.info(f"Comparing dates for {local_file_path}: local_mod_date = {local_mod_date}, github_upload_date = {github_upload_date}")
+            logging.debug(f"Comparing dates for {local_file_path}: local_mod_date = {local_mod_date}, github_upload_date = {github_upload_date}")
             return local_mod_date < github_upload_date
         except Exception as err:
             logging.error(f"Error checking file dates for {local_file_path}: {err}")

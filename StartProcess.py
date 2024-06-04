@@ -3,7 +3,6 @@ import os
 import platform
 import subprocess
 
-#from MonitorProc import ProcessMonitor
 import myglobals
 class StartProcess:
     def __init__(self):
@@ -17,10 +16,17 @@ class StartProcess:
                 command = self.build_command(process_type)
                 myglobals.process_info['CPUCommand'] = command
                 return self.run_process(command, process_type)
-            else:
+            elif process_type == "CPUMining":
                 command = myglobals.process_info['CPUCommand']
                 return self.run_process(command, process_type)
 
+            if process_type == "GPUMining" and myglobals.process_info['GPUCommand'] == None:
+                command = self.build_command(process_type)
+                myglobals.process_info['GPUCommand'] = command
+                return self.run_process(command, process_type)
+            else:
+                command = myglobals.process_info['GPUCommand']
+                return self.run_process(command, process_type)
 
 
         else:
@@ -98,23 +104,15 @@ class StartProcess:
         return proc
 
 def start_processes(process_starter):
-    if myglobals.options.get("CPUMining", False):
+    if myglobals.options.get("CPUMining", False) and myglobals.process_info['CPUProcess'] == None:
         cpu_process = process_starter.start("CPUMining")
         if cpu_process:
             myglobals.process_info['CPUProcess'] = cpu_process
-
-            #cpu_monitor = ProcessMonitor(cpu_process, options, restart_processes, process_starter, process_monitors, process_threads)
-            #cpu_monitor.start_monitoring()
-            #process_monitors.append(cpu_monitor)
-
-    if myglobals.options.get("GPUMining", False):
+    if myglobals.options.get("GPUMining", False) and myglobals.process_info['GPUProcess'] == None:
         gpu_process = process_starter.start("GPUMining")
         if gpu_process:
-            #from Restart import restart_processes  # Lazy import
             myglobals.process_info['GPUProcess'] = gpu_process
-            #gpu_monitor = ProcessMonitor(gpu_process, options, restart_processes, process_starter, process_monitors, process_threads)
-            #gpu_monitor.start_monitoring()
-            #process_monitors.append(gpu_monitor)
+
 
 
 
